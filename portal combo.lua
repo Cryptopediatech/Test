@@ -4,11 +4,18 @@ local UICorner = Instance.new("UICorner")
 local EquipBtn = Instance.new("TextButton")
 local ComboBtn = Instance.new("TextButton")
 local TeleportBtn = Instance.new("TextButton")
+local dragToggle = nil
+local dragSpeed = 0.15
+local dragInput, dragStart, dragPos
 
 ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
 Frame.Size = UDim2.new(0, 200, 0, 250)
 Frame.Position = UDim2.new(0, 20, 0, 300)
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Active = true
+Frame.Draggable = false -- we’ll handle dragging manually
 Frame.Parent = ScreenGui
 UICorner.CornerRadius = UDim.new(0, 12)
 UICorner.Parent = Frame
@@ -59,4 +66,32 @@ end)
 TeleportBtn.MouseButton1Click:Connect(function()
 	local vi = game:GetService("VirtualInputManager")
 	vi:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+end)
+
+-- Make GUI movable
+Frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragToggle = true
+		dragStart = input.Position
+		dragPos = Frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragToggle = false
+			end
+		end)
+	end
+end)
+
+Frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragToggle then
+		local delta = input.Position - dragStart
+		Frame.Position = UDim2.new(dragPos.X.Scale, dragPos.X.Offset + delta.X, dragPos.Y.Scale, dragPos.Y.Offset + delta.Y)
+	end
 end)
